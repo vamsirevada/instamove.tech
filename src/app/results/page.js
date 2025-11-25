@@ -218,7 +218,7 @@ function ResultsContent() {
       {/* Movie Content */}
       <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
         {/* Movie Poster */}
-        <div className="w-full lg:w-1/3 flex-shrink-0 space-y-4">
+        <div className="w-full lg:w-1/3 flex-shrink-0">
           <div className="relative aspect-[2/3] max-w-sm mx-auto lg:mx-0 overflow-hidden rounded-xl bg-muted shadow-2xl">
             {movie.posterPath ? (
               <Image
@@ -234,24 +234,6 @@ function ResultsContent() {
               </div>
             )}
           </div>
-
-          {/* Trailer Embed */}
-          {movie.trailerKey && (
-            <div className="w-full max-w-sm mx-auto lg:mx-0">
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-black shadow-lg border border-border/50">
-                <iframe
-                  src={`https://www.youtube.com/embed/${movie.trailerKey}`}
-                  title={`${movie.title} Trailer`}
-                  className="absolute top-0 left-0 w-full h-full"
-                  allowFullScreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                />
-              </div>
-              <p className="text-xs text-center text-muted-foreground mt-2 flex items-center justify-center gap-1">
-                <Play className="h-3 w-3" /> Official Trailer
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Movie Details */}
@@ -361,6 +343,26 @@ function ResultsContent() {
           )}
         </div>
       </div>
+
+      {/* Trailer Section */}
+      {movie.trailerKey && (
+        <div className="mt-12 border-t border-border/50 pt-8">
+          <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
+            <Play className="h-5 w-5 fill-current" /> Official Trailer
+          </h3>
+          <div className="w-full max-w-4xl mx-auto">
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-black shadow-2xl border border-border/50">
+              <iframe
+                src={`https://www.youtube.com/embed/${movie.trailerKey}`}
+                title={`${movie.title} Trailer`}
+                className="absolute top-0 left-0 w-full h-full"
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
