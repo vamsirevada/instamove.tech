@@ -12,6 +12,7 @@ import {
   Share2,
   Heart,
   Play,
+  X,
 } from 'lucide-react'
 import Image from 'next/image'
 import { CompanyLogo } from '@/components/CompanyLogo'
@@ -23,12 +24,14 @@ function ResultsContent() {
   const [movie, setMovie] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showTrailer, setShowTrailer] = useState(false)
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist()
 
   const fetchRecommendation = async () => {
     try {
       setLoading(true)
       setError(null)
+      setShowTrailer(false)
 
       const response = await fetch('/api/recommend', {
         method: 'POST',
@@ -217,22 +220,65 @@ function ResultsContent() {
 
       {/* Movie Content */}
       <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
-        {/* Movie Poster */}
-        <div className="w-full lg:w-1/3 flex-shrink-0">
-          <div className="relative aspect-[2/3] max-w-sm mx-auto lg:mx-0 overflow-hidden rounded-xl bg-muted shadow-2xl">
-            {movie.posterPath ? (
-              <Image
-                src={`https://image.tmdb.org/t/p/w500${movie.posterPath}`}
-                alt={movie.title}
-                fill
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Film className="h-16 w-16 sm:h-24 sm:w-24 text-muted-foreground/30" />
-              </div>
-            )}
+        {/* Poster Container */}
+        <div className="w-full lg:w-1/3 flex-shrink-0 perspective-1000">
+          <div
+            className={`relative w-full transition-all duration-700 ease-in-out transform-style-3d shadow-2xl rounded-xl ${
+              showTrailer ? 'aspect-video rotate-y-180' : 'aspect-[2/3]'
+            }`}
+          >
+            {/* Front Face (Poster) */}
+            <div className="absolute inset-0 backface-hidden overflow-hidden rounded-xl bg-muted group">
+              {movie.posterPath ? (
+                <Image
+                  src={`https://image.tmdb.org/t/p/w500${movie.posterPath}`}
+                  alt={movie.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  priority
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Film className="h-16 w-16 sm:h-24 sm:w-24 text-muted-foreground/30" />
+                </div>
+              )}
+
+              {/* Play Button Overlay */}
+              {movie.trailerKey && (
+                <button
+                  onClick={() => setShowTrailer(true)}
+                  className="absolute bottom-4 right-4 h-14 w-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center shadow-xl transition-all hover:scale-110 z-10 group-hover:bottom-6"
+                  title="Watch Trailer"
+                >
+                  <Play className="h-6 w-6 fill-current ml-1" />
+                </button>
+              )}
+            </div>
+
+            {/* Back Face (Trailer) */}
+            <div className="absolute inset-0 backface-hidden rotate-y-180 overflow-hidden rounded-xl bg-black">
+              {showTrailer && movie.trailerKey && (
+                <div className="w-full h-full relative">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${movie.trailerKey}?autoplay=1`}
+                    title={`${movie.title} Trailer`}
+                    className="w-full h-full"
+                    allowFullScreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowTrailer(false)
+                    }}
+                    className="absolute top-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center backdrop-blur-sm transition-colors z-20"
+                    title="Close Trailer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -343,26 +389,6 @@ function ResultsContent() {
           )}
         </div>
       </div>
-
-      {/* Trailer Section */}
-      {movie.trailerKey && (
-        <div className="mt-12 border-t border-border/50 pt-8">
-          <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-            <Play className="h-5 w-5 fill-current" /> Official Trailer
-          </h3>
-          <div className="w-full max-w-4xl mx-auto">
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-black shadow-2xl border border-border/50">
-              <iframe
-                src={`https://www.youtube.com/embed/${movie.trailerKey}`}
-                title={`${movie.title} Trailer`}
-                className="absolute top-0 left-0 w-full h-full"
-                allowFullScreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
