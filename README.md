@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Instamovie - AI-Powered Movie Discovery
 
-## Getting Started
+## Setup Instructions
 
-First, run the development server:
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure API Keys
+
+Create a `.env.local` file in the root directory with your API keys:
+
+```env
+# TMDB API Key - Get from https://www.themoviedb.org/settings/api
+TMDB_API_KEY=your_tmdb_api_key_here
+
+# OpenAI API Key - Get from https://platform.openai.com/api-keys
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+**Important:** Never commit the `.env.local` file to version control. It's already included in `.gitignore`.
+
+### 3. Get Your API Keys
+
+#### TMDB API Key:
+
+1. Go to https://www.themoviedb.org/
+2. Create an account or log in
+3. Go to Settings → API
+4. Request an API key (choose "Developer" option)
+5. Copy your API key to `.env.local`
+
+#### OpenAI API Key:
+
+1. Go to https://platform.openai.com/
+2. Create an account or log in
+3. Go to API Keys section
+4. Create a new secret key
+5. Copy your API key to `.env.local`
+
+### 4. Run the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **AI-Powered Recommendations**: Uses OpenAI GPT-3.5 to generate personalized movie recommendations
+- **TMDB Integration**: Fetches movie details, posters, and ratings from The Movie Database
+- **Secure API Keys**: All API keys are stored server-side and never exposed to the client
+- **Beautiful UI**: Modern, responsive design with dot pattern background
+- **Smart Search**: Filter by genre, mood, language, and streaming platform
 
-## Learn More
+## How It Works
 
-To learn more about Next.js, take a look at the following resources:
+1. User fills out preferences (genre, mood, language, platform)
+2. Form data is sent to the `/api/recommend` endpoint
+3. OpenAI generates 5 movie recommendations based on preferences
+4. TMDB API fetches detailed information for each recommended movie
+5. Results are displayed with posters, ratings, and AI-generated reasons
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Security
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- API keys are stored in environment variables
+- All API calls are made server-side (Next.js API routes)
+- Client never has access to API keys
+- `.env.local` is gitignored to prevent accidental commits
