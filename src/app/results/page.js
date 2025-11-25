@@ -1,13 +1,13 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Star, Sparkles, Film, RefreshCw } from 'lucide-react'
 import Image from 'next/image'
 import { CompanyLogo } from '@/components/CompanyLogo'
 
-export default function ResultsPage() {
+function ResultsContent() {
   const searchParams = useSearchParams()
   const [movie, setMovie] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -271,5 +271,24 @@ export default function ResultsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="text-sm sm:text-lg text-muted-foreground">
+              Loading...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <ResultsContent />
+    </Suspense>
   )
 }

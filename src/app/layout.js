@@ -4,6 +4,8 @@ import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { DotPattern } from '@/components/ui/dot-pattern'
 import { cn } from '@/lib/utils'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -35,6 +37,8 @@ export default function RootLayout({ children }) {
         <Navbar />
         <main className="flex-1 relative z-10">{children}</main>
         <Footer />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
