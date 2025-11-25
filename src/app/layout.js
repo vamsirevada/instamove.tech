@@ -4,8 +4,8 @@ import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { DotPattern } from '@/components/ui/dot-pattern'
 import { cn } from '@/lib/utils'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/react'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
