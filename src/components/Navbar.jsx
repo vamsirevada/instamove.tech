@@ -10,7 +10,7 @@ export function Navbar() {
   const isWatchlist = pathname === '/watchlist'
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-transparent">
+    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/30 backdrop-blur-md supports-[backdrop-filter]:bg-white/30">
       <div className="container flex h-14 sm:h-16 items-center justify-between mx-auto px-3 sm:px-4">
         <Link
           href="/"
