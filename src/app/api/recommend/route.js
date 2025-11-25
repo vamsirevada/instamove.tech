@@ -114,6 +114,15 @@ IMPORTANT: Return ONLY the JSON object, no additional text or markdown formattin
       if (searchData.results && searchData.results.length > 0) {
         const movie = searchData.results[0]
 
+        // Fetch videos (trailers)
+        const videosResponse = await fetch(
+          `https://api.themoviedb.org/3/movie/${movie.id}/videos?api_key=${process.env.TMDB_API_KEY}`
+        )
+        const videosData = await videosResponse.json()
+        const trailer = videosData.results?.find(
+          (video) => video.site === 'YouTube' && video.type === 'Trailer'
+        )
+
         return NextResponse.json({
           movie: {
             id: movie.id,
@@ -123,6 +132,7 @@ IMPORTANT: Return ONLY the JSON object, no additional text or markdown formattin
             backdropPath: movie.backdrop_path,
             releaseDate: movie.release_date,
             voteAverage: movie.vote_average,
+            trailerKey: trailer ? trailer.key : null,
             // AI-generated details
             director: recommendation.director,
             genres: recommendation.genre,

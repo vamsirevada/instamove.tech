@@ -3,15 +3,27 @@
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Star, Sparkles, Film, RefreshCw } from 'lucide-react'
+import {
+  ArrowLeft,
+  Star,
+  Sparkles,
+  Film,
+  RefreshCw,
+  Share2,
+  Heart,
+  Play,
+} from 'lucide-react'
 import Image from 'next/image'
 import { CompanyLogo } from '@/components/CompanyLogo'
+import { useWatchlist } from '@/hooks/useWatchlist'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function ResultsContent() {
   const searchParams = useSearchParams()
   const [movie, setMovie] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist()
 
   const fetchRecommendation = async () => {
     try {
@@ -49,14 +61,56 @@ function ResultsContent() {
     fetchRecommendation()
   }, [])
 
+  const handleShare = async () => {
+    if (!movie) return
+
+    const text = `Check out "${movie.title}" on Instamovie! A perfect match for your vibe. 🎬✨`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: movie.title,
+          text: text,
+          url: window.location.href,
+        })
+      } catch (err) {
+        console.log('Error sharing:', err)
+      }
+    } else {
+      navigator.clipboard.writeText(`${text} ${window.location.href}`)
+      alert('Link copied to clipboard!')
+    }
+  }
+
+  const toggleWatchlist = () => {
+    if (!movie) return
+
+    if (isInWatchlist(movie.id)) {
+      removeFromWatchlist(movie.id)
+    } else {
+      addToWatchlist(movie)
+    }
+  }
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-sm sm:text-lg text-muted-foreground">
-            Finding your perfect movie...
-          </p>
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
+          <Skeleton className="w-full lg:w-1/3 aspect-[2/3] rounded-xl" />
+          <div className="flex-1 space-y-4">
+            <Skeleton className="h-10 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-32 w-full rounded-lg" />
+          </div>
         </div>
       </div>
     )
@@ -114,7 +168,7 @@ function ResultsContent() {
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
           <div className="flex-1 min-w-0">
             <h1 className="text-xl sm:text-3xl font-bold mb-1">
               Your Perfect Match
@@ -123,7 +177,33 @@ function ResultsContent() {
               AI-curated just for you
             </p>
           </div>
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex flex-wrap gap-2 flex-shrink-0">
+            <button
+              onClick={toggleWatchlist}
+              className={`inline-flex items-center gap-1.5 h-9 sm:h-10 px-3 sm:px-4 rounded-full border text-xs sm:text-sm font-medium transition-colors ${
+                isInWatchlist(movie.id)
+                  ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+                  : 'bg-background border-input hover:bg-accent text-foreground'
+              }`}
+            >
+              <Heart
+                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${
+                  isInWatchlist(movie.id) ? 'fill-current' : ''
+                }`}
+              />
+              <span className="hidden sm:inline">
+                {isInWatchlist(movie.id) ? 'Saved' : 'Watchlist'}
+              </span>
+            </button>
+
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center gap-1.5 h-9 sm:h-10 px-3 sm:px-4 rounded-full border border-input bg-background hover:bg-accent text-xs sm:text-sm font-medium transition-colors"
+            >
+              <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Share</span>
+            </button>
+
             <button
               onClick={fetchRecommendation}
               className="inline-flex items-center gap-1.5 h-9 sm:h-10 px-3 sm:px-6 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-medium transition-colors hover:bg-primary/90"
@@ -131,13 +211,6 @@ function ResultsContent() {
               <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Get Another</span>
             </button>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 h-9 sm:h-10 px-3 sm:px-6 rounded-full border border-input bg-background hover:bg-accent text-xs sm:text-sm font-medium transition-colors"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">New Search</span>
-            </Link>
           </div>
         </div>
       </div>
@@ -145,7 +218,7 @@ function ResultsContent() {
       {/* Movie Content */}
       <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
         {/* Movie Poster */}
-        <div className="w-full lg:w-1/3 flex-shrink-0">
+        <div className="w-full lg:w-1/3 flex-shrink-0 space-y-4">
           <div className="relative aspect-[2/3] max-w-sm mx-auto lg:mx-0 overflow-hidden rounded-xl bg-muted shadow-2xl">
             {movie.posterPath ? (
               <Image
@@ -161,6 +234,24 @@ function ResultsContent() {
               </div>
             )}
           </div>
+
+          {/* Trailer Embed */}
+          {movie.trailerKey && (
+            <div className="w-full max-w-sm mx-auto lg:mx-0">
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-black shadow-lg border border-border/50">
+                <iframe
+                  src={`https://www.youtube.com/embed/${movie.trailerKey}`}
+                  title={`${movie.title} Trailer`}
+                  className="absolute top-0 left-0 w-full h-full"
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                />
+              </div>
+              <p className="text-xs text-center text-muted-foreground mt-2 flex items-center justify-center gap-1">
+                <Play className="h-3 w-3" /> Official Trailer
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Movie Details */}
