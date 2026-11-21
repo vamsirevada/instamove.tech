@@ -2,8 +2,6 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
-import { DotPattern } from '@/components/ui/dot-pattern'
-import { cn } from '@/lib/utils'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 
@@ -28,11 +26,9 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col relative`}
       >
-        <DotPattern
-          className={cn(
-            'text-neutral-400/40',
-            '[mask-image:radial-gradient(1200px_circle_at_center,white,transparent)]'
-          )}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 text-neutral-400/40 [background-image:radial-gradient(circle_at_1px_1px,currentColor_0.8px,transparent_1.15px)] [background-size:16px_16px] [mask-image:radial-gradient(1200px_circle_at_center,white,transparent)]"
         />
         <Navbar />
         <main className="flex-1 relative z-10">{children}</main>

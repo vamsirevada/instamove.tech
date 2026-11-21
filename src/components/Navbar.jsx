@@ -10,7 +10,7 @@ export function Navbar() {
   const isWatchlist = pathname === '/watchlist'
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/30 backdrop-blur-md supports-[backdrop-filter]:bg-white/30">
+    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="container flex h-14 sm:h-16 items-center justify-between mx-auto px-3 sm:px-4">
         <Link
           href="/"
@@ -21,28 +21,32 @@ export function Navbar() {
             Instamovie
           </span>
         </Link>
-        <nav className="flex items-center gap-2 sm:gap-4">
+        <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-4">
           <Link
             href="/"
-            className={`inline-flex items-center justify-center h-8 sm:h-10 px-3 sm:px-6 rounded-full text-xs sm:text-sm font-medium transition-colors ${
+            aria-label="Discover"
+            aria-current={isHome ? 'page' : undefined}
+            className={`inline-flex items-center justify-center h-11 px-2.5 min-[380px]:px-3 sm:px-6 rounded-full text-xs sm:text-sm font-medium transition-colors ${
               isHome
                 ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                 : 'bg-transparent text-muted-foreground hover:text-primary border border-input'
             }`}
           >
-            <Search className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Discover</span>
+            <Search className="size-3.5 min-[380px]:mr-1.5 sm:size-4 sm:mr-2" />
+            <span className="hidden min-[380px]:inline">Discover</span>
           </Link>
           <Link
             href="/watchlist"
-            className={`inline-flex items-center justify-center h-8 sm:h-10 px-3 sm:px-6 rounded-full text-xs sm:text-sm font-medium transition-colors ${
+            aria-label="Watchlist"
+            aria-current={isWatchlist ? 'page' : undefined}
+            className={`inline-flex items-center justify-center h-11 px-2.5 min-[380px]:px-3 sm:px-6 rounded-full text-xs sm:text-sm font-medium transition-colors ${
               isWatchlist
                 ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                 : 'bg-transparent text-muted-foreground hover:text-primary'
             }`}
           >
-            <Heart className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Watchlist</span>
+            <Heart className="size-3.5 min-[380px]:mr-1.5 sm:size-4 sm:mr-2" />
+            <span className="hidden min-[380px]:inline">Watchlist</span>
           </Link>
         </nav>
       </div>

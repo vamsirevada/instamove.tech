@@ -70,8 +70,8 @@ export default function WatchlistPage() {
 
               <button
                 onClick={() => removeFromWatchlist(movie.id)}
-                className="absolute top-2 right-2 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
-                title="Remove from Watchlist"
+                className="absolute top-2 right-2 p-2 rounded-full bg-black/50 text-white sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-red-500/80"
+                aria-label={`Remove ${movie.title} from watchlist`}
               >
                 <Trash2 className="h-4 w-4" />
               </button>

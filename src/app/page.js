@@ -1,181 +1,146 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { Sparkles, Search, Smile, Globe, Monitor } from 'lucide-react'
-import { CompanyLogo } from '@/components/CompanyLogo'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { ArrowRight, Shuffle, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { countryCodes, useStreamingCountry } from './useStreamingCountry'
+import { StreamingCountryPicker } from './StreamingCountryPicker'
 
-export default function Home() {
+const genres = ['Action', 'Sci-Fi', 'Comedy', 'Drama', 'Horror', 'Romance', 'Thriller', 'Documentary', 'Indie']
+const languages = ['English', 'Hindi', 'Telugu', 'Tamil', 'Malayalam', 'Kannada', 'Spanish', 'French', 'Korean', 'Japanese', 'Mandarin', 'Cantonese', 'German', 'Italian', 'Portuguese', 'Arabic', 'Turkish', 'Bengali', 'Indonesian', 'Thai']
+const platforms = ['Netflix', 'Amazon Prime']
+const moods = ['Feel-good', 'Mind-bending', 'On edge', 'Slow burn']
+const emptyPreferences = { genre: '', mood: '', language: '', platform: '', includeClassics: false, short: false }
+const controlClass = 'h-11 w-full min-w-0 rounded-xl border border-input bg-background px-3 text-sm disabled:opacity-65'
+function FilterField({ label, value, onChange, options, placeholder, disabled }) {
+  return (
+    <label className="grid min-w-0 gap-1.5 text-left text-xs font-medium text-muted-foreground">
+      <span>{label}</span>
+      <select aria-label={label} value={value} onChange={onChange} disabled={disabled} className={controlClass}>
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>{option === 'Indie' ? 'Indie / Art House' : option}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+function Discovery({ initial = emptyPreferences, initialRegion = null }) {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    genre: '',
-    mood: '',
-    language: '',
-    platform: '',
-    includeClassics: false,
-  })
+  const [formData, setFormData] = useState(initial)
+  const [filtersOpen, setFiltersOpen] = useState(Boolean(initial.genre || initial.language || initial.platform || initial.includeClassics || initial.short))
+  const filterCount = [formData.genre, formData.language, formData.platform, formData.includeClassics, formData.short].filter(Boolean).length
 
-  const platforms = [
-    'Netflix',
-    'Amazon Prime',
-    'Disney+',
-    'Hulu',
-    'HBO Max',
-    'Apple TV+',
-    'Paramount+',
-    'Peacock',
-    'YouTube',
-  ]
+  const [selectedCountry, setSelectedCountry] = useStreamingCountry(initialRegion)
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  function changeCountry(nextCountry) {
+    setSelectedCountry(nextCountry)
+    if (!nextCountry) updateFilter('platform', '')
+  }
 
-    const params = new URLSearchParams()
-    if (formData.genre) params.set('genre', formData.genre)
-    if (formData.mood) params.set('mood', formData.mood)
-    if (formData.language) params.set('language', formData.language)
-    if (formData.platform) params.set('platform', formData.platform)
-    params.set('includeClassics', formData.includeClassics.toString())
+  function updateFilter(field, value) {
+    setFormData((current) => ({ ...current, [field]: value }))
+  }
 
-    router.push(`/results?${params.toString()}`)
+  function openResults(preferences) {
+    const params = new URLSearchParams({
+      region: selectedCountry,
+      includeClassics: String(preferences.includeClassics),
+    })
+    if (preferences.short) params.set('short', 'true')
+    for (const field of ['genre', 'mood', 'language', 'platform']) {
+      const value = preferences[field].trim()
+      if (value && (field !== 'platform' || selectedCountry)) params.set(field, value)
+    }
+    router.push(`/results?${params}`)
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 py-12 space-y-8">
-      {/* Hero Section */}
-      <div className="space-y-6 max-w-4xl mx-auto flex flex-col items-center">
-        <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium text-muted-foreground bg-background shadow-sm">
-          <Sparkles className="mr-2 h-3.5 w-3.5" />
-          AI-Powered Discovery
-        </div>
+    <section className="relative isolate flex min-h-[calc(100svh-8rem)] flex-col items-center justify-center px-4 py-16 text-center sm:px-8 sm:py-20" aria-labelledby="discovery-title">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-3/4 bg-[radial-gradient(ellipse_at_50%_33%,#e6e1ff80,transparent_67%)]" />
 
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl md:text-7xl">
-          Find your next{' '}
-          <span className="text-muted-foreground/80">masterpiece.</span>
-        </h1>
+      <h1 id="discovery-title" className="max-w-5xl text-balance text-[clamp(2.75rem,7vw,6.25rem)] leading-[0.99] font-extrabold tracking-[-0.052em]">
+        Find your next <span className="bg-linear-to-r from-violet-700 to-indigo-600 bg-clip-text text-transparent">masterpiece.</span>
+      </h1>
+      <p className="mt-5 max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+        Tell us your mood. Get one movie for tonight and see where it streams.
+      </p>
 
-        <p className="text-lg text-muted-foreground sm:text-xl max-w-2xl mx-auto">
-          Stop scrolling. Start watching. Tell us your vibe, and our AI will
-          curate the perfect film for this exact moment.
-        </p>
-      </div>
-
-      {/* Search Card */}
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-3xl bg-card rounded-xl shadow-lg border p-2 sm:p-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200"
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          {/* Genre Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <select
-              value={formData.genre}
-              onChange={(e) =>
-                setFormData({ ...formData, genre: e.target.value })
-              }
-              className="w-full h-12 pl-10 pr-4 rounded-md border bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none"
-            >
-              <option value="">Select Genre</option>
-              <option value="Action">Action</option>
-              <option value="Sci-Fi">Sci-Fi</option>
-              <option value="Comedy">Comedy</option>
-              <option value="Drama">Drama</option>
-              <option value="Horror">Horror</option>
-              <option value="Romance">Romance</option>
-              <option value="Thriller">Thriller</option>
-              <option value="Documentary">Documentary</option>
-              <option value="Indie">Indie / Art House</option>
-            </select>
-          </div>
-
-          {/* Mood Input */}
-          <div className="relative">
-            <Smile className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Current Mood"
-              value={formData.mood}
-              onChange={(e) =>
-                setFormData({ ...formData, mood: e.target.value })
-              }
-              className="w-full h-12 pl-10 pr-4 rounded-md border bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-          </div>
-
-          {/* Language Input */}
-          <div className="relative">
-            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <select
-              value={formData.language}
-              onChange={(e) =>
-                setFormData({ ...formData, language: e.target.value })
-              }
-              className="w-full h-12 pl-10 pr-4 rounded-md border bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none"
-            >
-              <option value="">Any Language</option>
-              <option value="English">English</option>
-              <option value="Hindi">Hindi</option>
-              <option value="Telugu">Telugu</option>
-              <option value="Tamil">Tamil</option>
-              <option value="Malayalam">Malayalam</option>
-              <option value="Kannada">Kannada</option>
-              <option value="Spanish">Spanish</option>
-              <option value="French">French</option>
-              <option value="Korean">Korean</option>
-              <option value="Japanese">Japanese</option>
-            </select>
-          </div>
-
-          {/* Platform Input with Logo */}
-          <div className="relative">
-            {formData.platform ? (
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
-                <CompanyLogo name={formData.platform} size={20} />
-              </div>
-            ) : (
-              <Monitor className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-            )}
-            <select
-              value={formData.platform}
-              onChange={(e) =>
-                setFormData({ ...formData, platform: e.target.value })
-              }
-              className={`w-full h-12 ${
-                formData.platform ? 'pl-11' : 'pl-10'
-              } pr-4 rounded-md border bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none`}
-            >
-              <option value="">Any Platform</option>
-              {platforms.map((platform) => (
-                <option key={platform} value={platform}>
-                  {platform}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between px-1">
-          <label className="flex items-center space-x-2 text-sm text-muted-foreground cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.includeClassics}
-              onChange={(e) =>
-                setFormData({ ...formData, includeClassics: e.target.checked })
-              }
-              className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
-            />
-            <span>Include Classics</span>
-          </label>
-
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center h-10 px-8 rounded-md bg-primary text-primary-foreground font-medium transition-colors hover:bg-primary/90"
-          >
-            Find Movie
+      <form id="movie-finder" className="mt-8 w-full max-w-2xl scroll-mt-24 sm:mt-9" onSubmit={(event) => {
+        event.preventDefault()
+        openResults(formData)
+      }}>
+        <div className="flex min-h-15 items-center gap-2 rounded-2xl border border-input/80 bg-background p-1.5 pl-3 shadow-[0_12px_35px_-20px_#39247566] transition-[box-shadow,border-color] focus-within:border-violet-500 focus-within:shadow-[0_0_0_3px_#ede9fe] sm:gap-3 sm:rounded-full sm:pl-5">
+          <Sparkles aria-hidden="true" className="size-4 shrink-0 text-violet-700 sm:size-5" />
+          <label htmlFor="movie-mood" className="sr-only">Mood</label>
+          <input id="movie-mood" name="mood" value={formData.mood} onChange={(event) => updateFilter('mood', event.target.value)} placeholder="A clever mystery…" className="min-h-11 w-0 flex-1 bg-transparent text-base placeholder:text-muted-foreground focus:outline-none" />
+          <button type="submit" className="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/85 active:bg-primary/75 sm:rounded-full sm:px-5">
+            Find a movie <ArrowRight aria-hidden="true" className="hidden size-4 sm:block" />
           </button>
         </div>
+
+        <div role="group" aria-label="Mood suggestions" className="mt-3 flex flex-wrap justify-center gap-1.5 sm:gap-2">
+          {moods.map((mood) => (
+            <button key={mood} type="button" aria-pressed={formData.mood === mood} onClick={() => updateFilter('mood', formData.mood === mood ? '' : mood)} className="min-h-10 cursor-pointer rounded-full border border-violet-100 bg-white/85 px-2 text-xs font-medium text-neutral-700 transition-colors hover:border-violet-200 hover:bg-violet-50 aria-pressed:border-violet-200 aria-pressed:bg-violet-100 aria-pressed:text-violet-900 sm:px-4 sm:text-sm">
+              {mood}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground sm:gap-x-6">
+          <StreamingCountryPicker value={selectedCountry} onChange={changeCountry} />
+          <button type="button" aria-expanded={filtersOpen} aria-controls="search-filters" onClick={() => setFiltersOpen(!filtersOpen)} className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 transition-colors hover:text-foreground aria-expanded:text-violet-700">
+            <SlidersHorizontal aria-hidden="true" className="size-4" /> Filters
+            {filterCount > 0 && <span className="rounded-full bg-violet-100 px-1.5 text-xs font-semibold text-violet-900">{filterCount}</span>}
+          </button>
+          <button type="button" onClick={() => openResults(emptyPreferences)} className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 transition-colors hover:text-foreground">
+            <Shuffle aria-hidden="true" className="size-4" /> Surprise me
+          </button>
+        </div>
+
+        <div id="search-filters" hidden={!filtersOpen} className="mt-3 border-t border-input/75 pt-4 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <FilterField label="Genre" value={formData.genre} onChange={(event) => updateFilter('genre', event.target.value)} options={genres} placeholder="Any genre" />
+            <FilterField label="Language" value={formData.language} onChange={(event) => updateFilter('language', event.target.value)} options={languages} placeholder="Any language" />
+            <FilterField label="Streaming service" value={formData.platform} onChange={(event) => updateFilter('platform', event.target.value)} options={platforms} placeholder={selectedCountry ? 'Any service' : 'Choose a country first'} disabled={!selectedCountry} />
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 self-end text-left text-sm text-muted-foreground">
+              <input type="checkbox" checked={formData.includeClassics} onChange={(event) => updateFilter('includeClassics', event.target.checked)} className="size-4 accent-violet-700" />
+              Include classics
+            </label>
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 self-end text-left text-sm text-muted-foreground">
+              <input type="checkbox" checked={formData.short} onChange={(event) => updateFilter('short', event.target.checked)} className="size-4 accent-violet-700" />
+              90 minutes or less
+            </label>
+          </div>
+        </div>
       </form>
-    </div>
+    </section>
+  )
+}
+
+function DiscoveryFromUrl() {
+  const params = useSearchParams()
+  const region = params.get('region')
+  const platform = params.get('platform')
+  const initial = {
+    genre: genres.includes(params.get('genre')) ? params.get('genre') : '',
+    mood: params.get('mood') ?? '',
+    language: languages.includes(params.get('language')) ? params.get('language') : '',
+    platform: region !== '' && platforms.includes(platform === 'Prime Video' ? 'Amazon Prime' : platform)
+      ? (platform === 'Prime Video' ? 'Amazon Prime' : platform)
+      : '',
+    includeClassics: params.get('includeClassics') === 'true',
+    short: params.get('short') === 'true',
+  }
+
+  return <Discovery key={params.toString()} initial={initial} initialRegion={region === '' || countryCodes.has(region) ? region : null} />
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<Discovery />}>
+      <DiscoveryFromUrl />
+    </Suspense>
   )
 }
