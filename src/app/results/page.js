@@ -46,9 +46,9 @@ function ResultsContent({ searchParams }) {
         },
         body: JSON.stringify({
           genre: searchParams.get('genre'),
-          mood: searchParams.get('mood'),
+          mood: [searchParams.get('vibe'), searchParams.get('mood')].filter(Boolean).join('. '),
           language: searchParams.get('language'),
-          platform: selectedRegion ? searchParams.get('platform') : null,
+          platforms: selectedRegion ? searchParams.getAll('platform') : [],
           region: selectedRegion,
           includeClassics: searchParams.get('includeClassics') === 'true',
           short: searchParams.get('short') === 'true',

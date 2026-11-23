@@ -1,7 +1,4 @@
-export const services = [
-  { ids: [8, 1796], name: 'Netflix', key: 'netflix' },
-  { ids: [9, 119, 2100], name: 'Prime Video', key: 'primeVideo' },
-]
+import { services } from './streaming-services'
 
 export async function fetchTmdb(path, params = {}, { revalidate, signal } = {}) {
   const query = new URLSearchParams({ ...params, api_key: process.env.TMDB_API_KEY })
@@ -39,7 +36,7 @@ function getProviderKey(providerId, name, region) {
   if (/^apple tv(?: store| plus|\+)?$/i.test(name)) return 'appleTv'
   if (/^youtube(?: movies(?: & tv)?| free)?$/i.test(name)) return 'youtube'
   if (region === 'IN' && /^jio\s*hotstar$/i.test(name)) return 'jioHotstar'
-  return services.find(({ ids }) => ids.includes(providerId))?.key
+  return services.find((service) => (!service.region || service.region === region) && service.ids.includes(providerId))?.key
 }
 
 function getOffers(entries = [], region) {
@@ -61,7 +58,9 @@ export async function getStreamingAvailability(movieId, region, signal) {
   const listing = data.results?.[region]
   const subscriptions = new Set(listing?.flatrate?.map((provider) => provider.provider_id))
   return {
-    providers: services.filter(({ ids }) => ids.some((id) => subscriptions.has(id))).map(({ name }) => name),
+    providers: services
+      .filter((service) => (!service.region || service.region === region) && service.ids.some((id) => subscriptions.has(id)))
+      .map(({ name }) => name),
     offers: Object.fromEntries(
       Object.entries(offerTypes).map(([type, key]) => [type, getOffers(listing?.[key], region)])
     ),

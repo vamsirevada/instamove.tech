@@ -1,4 +1,4 @@
-import { getStreamingAvailability, services } from './tmdb'
+import { getStreamingAvailability } from './tmdb'
 
 // These title pages have been checked against the providers' own listings.
 const confirmedTitles = {
@@ -73,7 +73,9 @@ async function queryWikidata(movieId) {
 
 export async function getProviderLinks(movieId, region) {
   const { providers, offers = {} } = await getStreamingAvailability(movieId, region)
-  const eligible = new Set(services.filter(({ name }) => providers.includes(name)).map(({ key }) => key))
+  const eligible = new Set()
+  if (providers.includes('Netflix')) eligible.add('netflix')
+  if (providers.includes('Prime Video')) eligible.add('primeVideo')
   // A YouTube listing or video ID does not verify playable storefront access in a country.
   // Use the prefilled YouTube search until a specific link has been verified there.
   const confirmed = confirmedTitles[movieId]

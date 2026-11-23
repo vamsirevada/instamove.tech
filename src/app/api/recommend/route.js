@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { limitRecommendation } from './rate-limit'
-import { fetchTmdb, getMovieDetails, getStreamingAvailability, isMovieId, isStreamingRegion, movieFromDetails, services } from './tmdb'
+import { fetchTmdb, getMovieDetails, getStreamingAvailability, isMovieId, isStreamingRegion, movieFromDetails } from './tmdb'
+import { getSubscriptionService, services } from './streaming-services'
 
 const openai = process.env.OPENAI_API_KEY && process.env.RECOMMEND_CATALOG_ONLY !== '1'
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY, maxRetries: 0 })
@@ -64,11 +65,12 @@ async function findMovie(title, year, today, signal) {
   })
 }
 
-async function findCatalogCandidates({ service, region, genre, language, classicPick, excludedMovieIds, short, today }, signal) {
+async function findCatalogCandidates({ selectedServices, region, genre, language, classicPick, excludedMovieIds, short, today }, signal) {
+  const hasSubscriptionFilter = selectedServices.length > 0
   const params = {
-    ...(service && {
+    ...(hasSubscriptionFilter && {
       watch_region: region,
-      with_watch_providers: service.ids.join('|'),
+      with_watch_providers: selectedServices.flatMap(({ ids }) => ids).join('|'),
       with_watch_monetization_types: 'flatrate',
     }),
     ...(short && { 'with_runtime.lte': 90 }),
@@ -92,7 +94,7 @@ async function findCatalogCandidates({ service, region, genre, language, classic
       return !excludedMovieIds.has(movie.id) && isReleased(movie.release_date, today) &&
         (movie.release_date < '2000-01-01') === classicPick
     })
-    if (!service && !short && candidates.length) {
+    if (!hasSubscriptionFilter && !short && candidates.length) {
       return candidates.map((movie) => ({ movie }))
     }
     const candidatesToCheck = candidates.slice(0, checksRemaining)
@@ -103,10 +105,10 @@ async function findCatalogCandidates({ service, region, genre, language, classic
         candidatesToCheck.slice(offset, offset + 5).map(async (movie) => {
           const [details, availability] = await Promise.all([
             short ? getMovieDetails(movie.id, signal) : null,
-            service ? getStreamingAvailability(movie.id, region, signal) : null,
+            hasSubscriptionFilter ? getStreamingAvailability(movie.id, region, signal) : null,
           ])
           if (short && (!Number.isInteger(details.runtime) || details.runtime <= 0 || details.runtime > 90)) return null
-          if (service && !availability.providers.includes(service.name)) return null
+          if (hasSubscriptionFilter && !selectedServices.some(({ name }) => availability.providers.includes(name))) return null
           return { movie, details, availability }
         })
       )
@@ -270,25 +272,21 @@ export async function POST(request) {
 }
 
 async function recommend(body, json, signal) {
-  const { genre, mood, language, platform, includeClassics, previousReleaseYear, previousMovieId, recentMovieIds, short = false, region = 'IN' } = body
+  const { genre, mood, language, platform, platforms, includeClassics, previousReleaseYear, previousMovieId, recentMovieIds, short = false, region = 'IN' } = body
   if (region !== '' && !isStreamingRegion(region)) {
     return json({ error: 'Choose a valid streaming country.' }, 400)
   }
   const country = region ? new Intl.DisplayNames(['en'], { type: 'region' }).of(region) : null
-  const service = services.find(({ name }) =>
-    name === (platform === 'Amazon Prime' ? 'Prime Video' : platform)
-  )
-  if (platform && !service) {
-    return json(
-      { error: 'Choose Netflix or Prime Video to filter by a streaming service.' },
-      400
-    )
+  const requestedServices = platforms ?? (platform ? [platform] : [])
+  if (!Array.isArray(requestedServices) || requestedServices.length > services.length) {
+    return json({ error: 'Choose valid streaming subscriptions.' }, 400)
   }
-  if (service && !region) {
-    return json(
-      { error: 'Choose a country to filter by streaming service.' },
-      400
-    )
+  const selectedServices = [...new Set(requestedServices.map(getSubscriptionService))]
+  if (selectedServices.includes(undefined)) {
+    return json({ error: 'Choose valid streaming subscriptions.' }, 400)
+  }
+  if (selectedServices.length && !region) {
+    return json({ error: 'Choose a country to filter by streaming service.' }, 400)
   }
   const previousYear = getReleaseYear(previousReleaseYear)
   const classicPick =
@@ -301,9 +299,9 @@ async function recommend(body, json, signal) {
       .map(Number)
   )
   const today = new Date().toISOString().slice(0, 10)
-  const filters = { service, region, genre, language, classicPick, excludedMovieIds, short: short === true, today }
+  const filters = { selectedServices, region, genre, language, classicPick, excludedMovieIds, short: short === true, today }
   let catalog
-  if (service || short === true || !openai) {
+  if (selectedServices.length || short === true || !openai) {
     catalog = await findCatalogCandidates(filters, signal)
   }
 
@@ -324,7 +322,7 @@ async function recommend(body, json, signal) {
   }
   if (!pick) {
     return json({
-      message: `No ${excludedMovieIds.size ? 'new ' : ''}${classicPick ? 'pre-2000 ' : ''}movies${short === true ? ' of 90 minutes or less' : ''} matched your filters${service ? ` on ${service.name} for ${country}` : ''}. Try changing your preferences.`,
+      message: `No ${excludedMovieIds.size ? 'new ' : ''}${classicPick ? 'pre-2000 ' : ''}movies${short === true ? ' of 90 minutes or less' : ''} matched your filters${selectedServices.length ? ` on your selected services in ${country}` : ''}. Try changing your preferences.`,
     }, 404)
   }
 
