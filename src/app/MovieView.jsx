@@ -146,7 +146,7 @@ export function MovieView({
               <button
                 type="button"
                 disabled={loading || retryBlocked}
-                onClick={onAnother}
+                onClick={() => onAnother(region)}
                 className="inline-flex min-h-11 min-w-32 cursor-pointer items-center justify-center gap-2 rounded-full bg-violet-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-75"
               >
                 <RefreshCw aria-hidden="true" className={`size-4 ${loading ? 'motion-safe:animate-spin' : ''}`} />

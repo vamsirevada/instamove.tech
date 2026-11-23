@@ -5,19 +5,29 @@ import countries from './streaming-countries.json'
 import timeZoneCountries from './streaming-timezones.json'
 
 const StreamingGeoContext = createContext(null)
-const countryPreferenceKey = 'instamovie_streaming_country'
+const countryPreferenceKey = 'instamovie_country'
+const legacyCountryPreferenceKey = 'instamovie_streaming_country'
 export const countryCodes = new Set(countries.map(({ code }) => code))
 
+function normalizeCountry(value) {
+  const code = value?.trim().toUpperCase()
+  return countryCodes.has(code) ? code : null
+}
+
 export function StreamingCountryProvider({ geoCountry, children }) {
-  const code = geoCountry?.trim().toUpperCase()
-  const country = countryCodes.has(code) ? code : null
+  const country = normalizeCountry(geoCountry)
   return <StreamingGeoContext.Provider value={country}>{children}</StreamingGeoContext.Provider>
 }
 
-function detectUserCountry(geoCountry) {
+export function detectUserCountry(serverCountry) {
+  const geoCountry = normalizeCountry(serverCountry)
+  if (typeof window === 'undefined') return geoCountry ?? 'US'
+
   try {
-    const saved = localStorage.getItem(countryPreferenceKey)
-    if (countryCodes.has(saved)) return saved
+    const saved = normalizeCountry(
+      localStorage.getItem(countryPreferenceKey) ?? localStorage.getItem(legacyCountryPreferenceKey)
+    )
+    if (saved) return saved
   } catch {
     // Country selection still works for the current search.
   }
@@ -59,8 +69,9 @@ export function useStreamingCountry(initialCountry = null) {
   function changeCountry(region) {
     setCountry(region)
     try {
-      if (region) localStorage.setItem(countryPreferenceKey, region)
+      if (countryCodes.has(region)) localStorage.setItem(countryPreferenceKey, region)
       else localStorage.removeItem(countryPreferenceKey)
+      localStorage.removeItem(legacyCountryPreferenceKey)
     } catch {
       // Country selection still works for the current search.
     }

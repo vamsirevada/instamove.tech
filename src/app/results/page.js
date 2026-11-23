@@ -32,7 +32,7 @@ function ResultsContent({ searchParams }) {
   const query = searchParams.toString()
   const discoverHref = query ? `/?${query}#movie-finder` : '/#movie-finder'
 
-  const fetchRecommendation = useCallback(async ({ previousReleaseYear, previousMovieId, signal } = {}) => {
+  const fetchRecommendation = useCallback(async ({ previousReleaseYear, previousMovieId, selectedRegion = region, signal } = {}) => {
     try {
       setLoading(true)
       setError(null)
@@ -48,8 +48,8 @@ function ResultsContent({ searchParams }) {
           genre: searchParams.get('genre'),
           mood: searchParams.get('mood'),
           language: searchParams.get('language'),
-          platform: searchParams.get('platform'),
-          region,
+          platform: selectedRegion ? searchParams.get('platform') : null,
+          region: selectedRegion,
           includeClassics: searchParams.get('includeClassics') === 'true',
           short: searchParams.get('short') === 'true',
           previousReleaseYear,
@@ -182,7 +182,11 @@ function ResultsContent({ searchParams }) {
     <MovieView
       movie={movie}
       discoverHref={discoverHref}
-      onAnother={() => fetchRecommendation({ previousReleaseYear: movie.year, previousMovieId: movie.id })}
+      onAnother={(selectedRegion) => fetchRecommendation({
+        previousReleaseYear: movie.year,
+        previousMovieId: movie.id,
+        selectedRegion,
+      })}
       loading={loading}
       retryBlocked={Boolean(retryAt)}
       errorMessage={error?.message}

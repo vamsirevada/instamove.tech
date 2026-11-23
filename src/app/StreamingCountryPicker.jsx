@@ -1,7 +1,7 @@
 'use client'
 
 import { useId, useRef, useState } from 'react'
-import { Check, ChevronDown, Globe, Search, X } from 'lucide-react'
+import { Check, ChevronDown, Search, X } from 'lucide-react'
 import countries from './streaming-countries.json'
 
 const worldwide = { code: '', name: 'Worldwide' }
@@ -10,8 +10,20 @@ const countriesByCode = new Map(options.map((country) => [country.code, country]
 const shortcuts = new Map([['uk', 'GB'], ['usa', 'US'], ['uae', 'AE'], ['global', '']])
 const quickCodes = ['IN', 'US', 'GB', 'CA', 'AU']
 
-function countryFlag(code) {
-  return String.fromCodePoint(...[...code].map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65))
+function CountryFlag({ code, loading }) {
+  const file = `${code.toLowerCase()}.png`
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- FlagCDN provides the two small image sizes directly.
+    <img
+      alt=""
+      src={`https://flagcdn.com/w20/${file}`}
+      srcSet={`https://flagcdn.com/w40/${file} 2x`}
+      width={20}
+      height={15}
+      loading={loading}
+      className="h-[15px] w-5 shrink-0 rounded-[2px] object-cover"
+    />
+  )
 }
 
 function normalize(value) {
@@ -32,8 +44,8 @@ export function StreamingCountryPicker({ value, onChange, inSearch = false }) {
   const exact = shortcuts.has(term)
     ? countriesByCode.get(shortcuts.get(term))
     : options.find(({ code, name }) => code.toLowerCase() === term || normalize(name) === term)
-  const quickPicks = [...new Set(['', value, ...quickCodes])].map((code) => countriesByCode.get(code)).filter(Boolean)
-  const allCountries = countries.filter(({ code }) => !quickPicks.some((country) => country.code === code))
+  const quickPicks = [...new Set([value, ...quickCodes])].filter(Boolean).map((code) => countriesByCode.get(code)).filter(Boolean)
+  const allCountries = options.filter(({ code }) => !quickPicks.some((country) => country.code === code))
   const matches = term
     ? [exact, ...options.filter(({ code, name }) => code.toLowerCase().includes(term) || normalize(name).includes(term))]
         .filter(Boolean)
@@ -90,11 +102,7 @@ export function StreamingCountryPicker({ value, onChange, inSearch = false }) {
                 onClick={() => selectCountry(code)}
                 className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted focus-visible:bg-violet-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-violet-600 aria-pressed:bg-violet-50 aria-pressed:text-violet-900"
               >
-                {code ? (
-                  <span aria-hidden="true" className="w-5 shrink-0 text-center">{countryFlag(code)}</span>
-                ) : (
-                  <Globe aria-hidden="true" className="size-4 shrink-0" />
-                )}
+                {code && <CountryFlag code={code} loading="lazy" />}
                 <span className="min-w-0 flex-1 font-medium">{name}</span>
                 {code && <span aria-hidden="true" className="text-xs text-muted-foreground">{code}</span>}
                 <Check aria-hidden="true" className={`size-4 shrink-0 text-violet-700 ${code === value ? '' : 'invisible'}`} />
@@ -121,11 +129,7 @@ export function StreamingCountryPicker({ value, onChange, inSearch = false }) {
           ? 'w-full gap-1.5 rounded-lg px-2 text-left'
           : 'gap-2 rounded-full border border-violet-100 bg-white/90 px-3 hover:border-violet-200'}`}
       >
-        {selected?.code ? (
-          <span aria-hidden="true" className="shrink-0 text-base leading-none">{countryFlag(selected.code)}</span>
-        ) : selected && (
-          <Globe aria-hidden="true" className="size-4 shrink-0 text-violet-700" />
-        )}
+        {selected?.code && <CountryFlag code={selected.code} />}
         <span className={inSearch ? 'min-w-0 flex-1 wrap-anywhere' : 'max-w-[min(34vw,12rem)] truncate'}>
           {selected?.name ?? 'Detecting country…'}
         </span>
