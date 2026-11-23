@@ -1,25 +1,45 @@
 'use client'
 
-import { useState, useSyncExternalStore } from 'react'
+import { createContext, useContext, useState, useSyncExternalStore } from 'react'
 import countries from './streaming-countries.json'
+import timeZoneCountries from './streaming-timezones.json'
 
+const StreamingGeoContext = createContext(null)
 const countryPreferenceKey = 'instamovie_streaming_country'
 export const countryCodes = new Set(countries.map(({ code }) => code))
 
-function readCountryPreference() {
+export function StreamingCountryProvider({ geoCountry, children }) {
+  const code = geoCountry?.trim().toUpperCase()
+  const country = countryCodes.has(code) ? code : null
+  return <StreamingGeoContext.Provider value={country}>{children}</StreamingGeoContext.Provider>
+}
+
+function detectUserCountry(geoCountry) {
   try {
     const saved = localStorage.getItem(countryPreferenceKey)
-    if (saved === '' || countryCodes.has(saved)) return saved
+    if (countryCodes.has(saved)) return saved
   } catch {
     // Country selection still works for the current search.
   }
 
-  for (const locale of navigator.languages) {
-    const region = new Intl.Locale(locale).region
-    if (countryCodes.has(region)) return region
+  if (geoCountry) return geoCountry
+
+  try {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const country = timeZoneCountries[timeZone]
+    if (countryCodes.has(country)) return country
+  } catch {
+    // Continue with the browser locale when its time zone is unavailable.
   }
 
-  return ''
+  try {
+    const region = new Intl.Locale(navigator.language).region
+    if (countryCodes.has(region)) return region
+  } catch {
+    // Some browser language preferences do not contain a usable locale.
+  }
+
+  return 'US'
 }
 
 function subscribeToCountryPreference(callback) {
@@ -27,22 +47,20 @@ function subscribeToCountryPreference(callback) {
   return () => window.removeEventListener('storage', callback)
 }
 
-function readServerCountryPreference() {
-  return ''
-}
-
 export function useStreamingCountry(initialCountry = null) {
   const [country, setCountry] = useState(initialCountry)
+  const geoCountry = useContext(StreamingGeoContext)
   const suggestedCountry = useSyncExternalStore(
     subscribeToCountryPreference,
-    readCountryPreference,
-    readServerCountryPreference
+    () => detectUserCountry(geoCountry),
+    () => geoCountry
   )
 
   function changeCountry(region) {
     setCountry(region)
     try {
-      localStorage.setItem(countryPreferenceKey, region)
+      if (region) localStorage.setItem(countryPreferenceKey, region)
+      else localStorage.removeItem(countryPreferenceKey)
     } catch {
       // Country selection still works for the current search.
     }

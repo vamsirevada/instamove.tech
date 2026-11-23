@@ -51,6 +51,7 @@ function Discovery({ initial = emptyPreferences, initialRegion = null }) {
   }
 
   function openResults(preferences) {
+    if (selectedCountry === null) return
     const params = new URLSearchParams({
       region: selectedCountry,
       includeClassics: String(preferences.includeClassics),
@@ -73,15 +74,20 @@ function Discovery({ initial = emptyPreferences, initialRegion = null }) {
           <p className="mt-4 max-w-[32ch] text-pretty text-sm leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg">
             Pick a mood, get one movie, and see where to watch it in your country.
           </p>
-          <form id="movie-finder" className="mt-7 w-full scroll-mt-24 sm:mt-9" onSubmit={(event) => {
+          <form id="movie-finder" className="@container mt-7 w-full scroll-mt-24 sm:mt-9" onSubmit={(event) => {
             event.preventDefault()
             openResults(formData)
           }}>
-            <div className="flex flex-wrap items-center gap-2 rounded-[1rem] border border-[#dcd5f0] bg-white p-1.5 shadow-[0_6px_22px_-14px_#41326b55] transition-[box-shadow,border-color] focus-within:border-violet-500 focus-within:shadow-[0_0_0_3px_#ede9fe] sm:flex-nowrap sm:gap-3">
-              <Sparkles aria-hidden="true" className="ml-2 size-4 shrink-0 text-violet-700 sm:ml-3 sm:size-5" />
-              <label htmlFor="movie-mood" className="sr-only">Mood</label>
-              <input id="movie-mood" name="mood" value={formData.mood} onChange={(event) => updateFilter('mood', event.target.value)} placeholder="A clever mystery…" className="min-h-11 w-0 flex-1 bg-transparent text-base placeholder:text-muted-foreground focus:outline-none" />
-              <button type="submit" className="group inline-flex min-h-11 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-[0.7rem] bg-violet-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-800 active:bg-violet-900 sm:w-auto">
+            <div className="grid items-center gap-1.5 rounded-[1rem] border border-[#dcd5f0] bg-white p-1.5 shadow-[0_6px_22px_-14px_#41326b55] transition-[box-shadow,border-color] focus-within:border-violet-500 focus-within:shadow-[0_0_0_3px_#ede9fe] sm:grid-cols-[minmax(0,1fr)_auto] @min-[29rem]:grid-cols-[minmax(0,1fr)_auto_auto]">
+              <div className="flex min-w-0 items-center gap-2 px-3 sm:col-span-2 sm:pl-3.5 sm:pr-2 @min-[29rem]:col-span-1">
+                <Sparkles aria-hidden="true" className="size-4 shrink-0 text-violet-700" />
+                <label htmlFor="movie-mood" className="sr-only">Mood</label>
+                <input id="movie-mood" name="mood" value={formData.mood} onChange={(event) => updateFilter('mood', event.target.value)} placeholder="A clever mystery…" className="min-h-11 w-0 flex-1 bg-transparent text-base placeholder:text-muted-foreground focus:outline-none" />
+              </div>
+              <div className="min-w-0 border-t border-gray-200 pt-1 sm:pt-0 @min-[29rem]:max-w-40 @min-[29rem]:border-t-0 @min-[29rem]:border-l @min-[29rem]:pl-1">
+                <StreamingCountryPicker value={selectedCountry} onChange={changeCountry} inSearch />
+              </div>
+              <button type="submit" disabled={selectedCountry === null} className="group inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-[0.7rem] bg-violet-700 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-violet-800 active:bg-violet-900 disabled:cursor-wait disabled:opacity-70">
                 Find a movie <ArrowRight aria-hidden="true" className="size-4 motion-safe:transition-transform motion-safe:group-hover:translate-x-0.5" />
               </button>
             </div>
@@ -95,12 +101,11 @@ function Discovery({ initial = emptyPreferences, initialRegion = null }) {
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-[#e1dcee] pt-2 text-sm text-muted-foreground">
-              <StreamingCountryPicker value={selectedCountry} onChange={changeCountry} />
               <button type="button" aria-expanded={filtersOpen} aria-controls="search-filters" onClick={() => setFiltersOpen(!filtersOpen)} className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 transition-colors hover:text-foreground aria-expanded:text-violet-700">
                 <SlidersHorizontal aria-hidden="true" className="size-4" /> Filters
                 {filterCount > 0 && <span className="rounded-full bg-violet-100 px-1.5 text-xs font-semibold text-violet-900">{filterCount}</span>}
               </button>
-              <button type="button" onClick={() => openResults(emptyPreferences)} className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 transition-colors hover:text-foreground">
+              <button type="button" onClick={() => openResults(emptyPreferences)} disabled={selectedCountry === null} className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 transition-colors hover:text-foreground">
                 <Shuffle aria-hidden="true" className="size-4" /> Surprise me
               </button>
             </div>

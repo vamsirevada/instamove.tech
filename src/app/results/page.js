@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, RefreshCw } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MovieView } from '@/app/MovieView'
+import { countryCodes, useStreamingCountry } from '@/app/useStreamingCountry'
 
 const recentMoviesKey = 'instamovie:recent-recommendations'
 const maxRecentMovies = 50
@@ -25,6 +26,9 @@ function ResultsContent({ searchParams }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const recentMovies = useRef([])
+  const requestedRegion = searchParams.get('region')
+  const initialRegion = requestedRegion === '' || countryCodes.has(requestedRegion) ? requestedRegion : null
+  const [region] = useStreamingCountry(initialRegion)
   const query = searchParams.toString()
   const discoverHref = query ? `/?${query}#movie-finder` : '/#movie-finder'
 
@@ -45,7 +49,7 @@ function ResultsContent({ searchParams }) {
           mood: searchParams.get('mood'),
           language: searchParams.get('language'),
           platform: searchParams.get('platform'),
-          region: searchParams.get('region') ?? undefined,
+          region,
           includeClassics: searchParams.get('includeClassics') === 'true',
           short: searchParams.get('short') === 'true',
           previousReleaseYear,
@@ -79,16 +83,17 @@ function ResultsContent({ searchParams }) {
     } finally {
       if (!signal?.aborted) setLoading(false)
     }
-  }, [searchParams])
+  }, [searchParams, region])
 
   useEffect(() => {
+    if (region === null) return
     const controller = new AbortController()
     const timer = setTimeout(() => fetchRecommendation({ signal: controller.signal }), 0)
     return () => {
       clearTimeout(timer)
       controller.abort()
     }
-  }, [fetchRecommendation])
+  }, [fetchRecommendation, region])
 
   const retryAt = error?.retryAt
   useEffect(() => {

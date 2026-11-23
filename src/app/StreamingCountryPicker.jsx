@@ -10,11 +10,15 @@ const countriesByCode = new Map(options.map((country) => [country.code, country]
 const shortcuts = new Map([['uk', 'GB'], ['usa', 'US'], ['uae', 'AE'], ['global', '']])
 const quickCodes = ['IN', 'US', 'GB', 'CA', 'AU']
 
+function countryFlag(code) {
+  return String.fromCodePoint(...[...code].map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65))
+}
+
 function normalize(value) {
   return value.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').trim()
 }
 
-export function StreamingCountryPicker({ value, onChange }) {
+export function StreamingCountryPicker({ value, onChange, inSearch = false }) {
   const id = useId()
   const triggerRef = useRef(null)
   const dialogRef = useRef(null)
@@ -23,7 +27,7 @@ export function StreamingCountryPicker({ value, onChange }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
 
-  const selected = countriesByCode.get(value) ?? worldwide
+  const selected = countriesByCode.get(value) ?? null
   const term = normalize(query)
   const exact = shortcuts.has(term)
     ? countriesByCode.get(shortcuts.get(term))
@@ -86,7 +90,11 @@ export function StreamingCountryPicker({ value, onChange }) {
                 onClick={() => selectCountry(code)}
                 className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted focus-visible:bg-violet-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-violet-600 aria-pressed:bg-violet-50 aria-pressed:text-violet-900"
               >
-                {!code && <Globe aria-hidden="true" className="size-4 shrink-0" />}
+                {code ? (
+                  <span aria-hidden="true" className="w-5 shrink-0 text-center">{countryFlag(code)}</span>
+                ) : (
+                  <Globe aria-hidden="true" className="size-4 shrink-0" />
+                )}
                 <span className="min-w-0 flex-1 font-medium">{name}</span>
                 {code && <span aria-hidden="true" className="text-xs text-muted-foreground">{code}</span>}
                 <Check aria-hidden="true" className={`size-4 shrink-0 text-violet-700 ${code === value ? '' : 'invisible'}`} />
@@ -103,15 +111,24 @@ export function StreamingCountryPicker({ value, onChange }) {
       <button
         ref={triggerRef}
         type="button"
-        aria-label={`Streaming country: ${selected.name}`}
+        aria-label={selected ? `Streaming country: ${selected.name}` : 'Detecting streaming country'}
+        disabled={!selected}
         aria-haspopup="dialog"
         aria-controls={id}
         aria-expanded={open}
         onClick={openPicker}
-        className="inline-flex min-h-11 max-w-full min-w-0 cursor-pointer items-center gap-2 rounded-full border border-violet-100 bg-white/90 px-3 text-sm font-medium text-foreground transition-colors hover:border-violet-200 hover:bg-violet-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600"
+        className={`inline-flex min-h-11 max-w-full min-w-0 cursor-pointer items-center text-sm font-medium text-foreground transition-colors hover:bg-violet-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 ${inSearch
+          ? 'w-full gap-1.5 rounded-lg px-2 text-left'
+          : 'gap-2 rounded-full border border-violet-100 bg-white/90 px-3 hover:border-violet-200'}`}
       >
-        <Globe aria-hidden="true" className="size-4 shrink-0 text-violet-700" />
-        <span className="max-w-[min(34vw,12rem)] truncate">{selected.name}</span>
+        {selected?.code ? (
+          <span aria-hidden="true" className="shrink-0 text-base leading-none">{countryFlag(selected.code)}</span>
+        ) : selected && (
+          <Globe aria-hidden="true" className="size-4 shrink-0 text-violet-700" />
+        )}
+        <span className={inSearch ? 'min-w-0 flex-1 wrap-anywhere' : 'max-w-[min(34vw,12rem)] truncate'}>
+          {selected?.name ?? 'Detecting country…'}
+        </span>
         <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
       </button>
 
