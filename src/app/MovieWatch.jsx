@@ -138,9 +138,9 @@ export function MovieWatch({ movie, region, onRegionChange }) {
   }, [linksKey, movie.tmdbId, region])
 
   return (
-    <section aria-labelledby="streaming-availability-title" className="rounded-2xl border border-violet-100 bg-white/85 p-4 sm:p-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 id="streaming-availability-title" className="text-base font-semibold">Where to watch</h2>
+    <section aria-labelledby="streaming-availability-title" className="border-y border-border py-4 sm:py-5">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h2 id="streaming-availability-title" className="text-lg font-semibold tracking-tight">Where to watch</h2>
         <StreamingCountryPicker value={region} onChange={onRegionChange} />
       </div>
 
@@ -150,8 +150,8 @@ export function MovieWatch({ movie, region, onRegionChange }) {
         <div className="space-y-4">
           {groups.map(([type, label]) => (
             <div key={type}>
-              <h3 className="mb-1.5 text-sm font-medium text-muted-foreground">{label}</h3>
-              <ul className="divide-y divide-violet-100/80" aria-label={label}>
+              <h3 className="mb-1.5 font-mono text-xs font-medium text-muted-foreground">{label}</h3>
+              <ul className="divide-y divide-border" aria-label={label}>
                 {offers[type].map((offer) => (
                   <li key={offer.name}>
                     <ProviderOffer

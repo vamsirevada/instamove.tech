@@ -16,20 +16,16 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata = {
-  title: 'Instamovie - Discover Your Next Favorite Film',
-  description: 'AI-powered movie discovery platform',
+  title: 'InstaMovie | Find your next movie',
+  description: 'Find a movie for your mood and see where to watch it in your country.',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col relative`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col relative bg-[#fcfbfe]`}
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 text-neutral-400/40 [background-image:radial-gradient(circle_at_1px_1px,currentColor_0.8px,transparent_1.15px)] [background-size:16px_16px] [mask-image:radial-gradient(1200px_circle_at_center,white,transparent)]"
-        />
         <Navbar />
         <main className="flex-1 relative z-10">{children}</main>
         <Footer />
